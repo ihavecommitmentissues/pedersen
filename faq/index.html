@@ -1,4 +1,8 @@
-<h1>faq</h1>
+<p>
+    <a id="commit-mode" href="../#commit">commit</a> | 
+    <a id="verify-mode" href="../#verify">verify</a> |
+    <a id="faq">faq</a>
+</p>
 
 <p><b>q: what is a commitment?</b></p>
 
@@ -29,5 +33,3 @@
 <p>it's a NUMS (nothing up my sleeve) value that I took from other pedersen commitment implementations, like <a href="https://github.com/BlockstreamResearch/secp256k1-zkp/blob/master/src/modules/generator/main_impl.h#L16-L32">this one</a>. you encode the generator point of secp256k1 in compressed SEC1 form, hash it with SHA256, and take the 256 bit digest as the x-coordinate of H (and solve for the y-coordinate from that).</p>
 
 <p>it's important to disclose how H was chosen exactly, as the computational binding security of this implementation of pedersen commitments hinges on how hard it is to compute an elliptic curve discrete log of point H with base point G. otherwise i could just pick H = kG for some k only i know, which would allow me to forge any message/decommitment key pair i want for any commitment. incidentally this is similar to how the <a href="https://en.wikipedia.org/wiki/Dual_EC_DRBG">Dual_EC_DRBG</a> backdoor works.</p>
-
-<p><a href="..">back to main</a></p>

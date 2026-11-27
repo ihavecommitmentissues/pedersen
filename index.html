@@ -1,263 +1,258 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pedersen Commitment</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pedersen Commitment</title>
 </head>
 <body>
-  <p>
-    <button id="commit-mode" type="button" aria-pressed="true" disabled>Commit</button>
-    <button id="verify-mode" type="button" aria-pressed="false" disabled>Verify</button>
-  </p>
-
-  <h2 id="mode-heading">Create a commitment</h2>
-
-  <hr>
-
-  <form id="commit-form">
     <p>
-      <label for="commit-message">Message:</label><br>
-      <textarea id="commit-message" rows="4" cols="30" required></textarea>
+        <a id="commit-mode" aria-current="page">commit</a> |
+        <a id="verify-mode" href="#verify">verify</a> | 
+        <a href="faq">faq</a>
     </p>
-    <p><button id="create" type="submit" disabled>Create commitment</button></p>
 
-    <div id="result" hidden>
-      <hr>
-      <p>
-        <label for="commitment-output">Commitment (Base64)</label>
-        <span id="r-help">(post this to the world first)</span><br>
-        <input id="commitment-output" size="30" readonly>
-        <button id="copy-link" type="button">Copy link to commitment</button>
-      </p>
-      <p>
-        <label for="r-output">Blinding scalar (Base64)</label>
-        <span id="r-help">(save this and keep it secret until you want to reveal your message to the world)</span><br>
-        <input id="r-output" size="30" readonly aria-describedby="r-help">
-        <button id="copy-r" type="button">Copy blinding scalar</button>
-      </p>
-      <p id="manual-copy" hidden>
-        <label for="link-output">Link to commitment:</label><br>
-        <input id="link-output" size="30" readonly>
-      </p>
-    </div>
-  </form>
+    <h2 id="mode-heading">create a commitment</h2>
 
-  <form id="verify-form" hidden>
-    <p>
-      <label for="verify-commitment">Commitment (Base64):</label><br>
-      <input id="verify-commitment" size="30" required
-             spellcheck="false" autocomplete="off">
-    </p>
-    <p>
-      <label for="verify-message">Message:</label><br>
-      <textarea id="verify-message" rows="4" cols="30" required></textarea>
-    </p>
-    <p>
-      <label for="verify-r">Blinding scalar (Base64):</label><br>
-      <input id="verify-r" size="30" required
-             spellcheck="false" autocomplete="off">
-    </p>
-    <p><button type="submit">Verify commitment</button></p>
-  </form>
+    <hr>
 
-  <p id="status" role="status">Loading cryptography…</p>
+    <form id="commit-form">
+        <p>
+            <label for="commit-message">message:</label><br>
+            <textarea id="commit-message" rows="4" cols="30" required></textarea>
+        </p>
+        <p><button id="create" type="submit" disabled>create commitment</button></p>
 
-  <p><a href="faq">faq</a></p>
+        <div id="result" hidden>
+            <hr>
+            <p>
+                <label for="commitment-output">commitment (base64)</label>
+                <span id="commitment-help">(post this to the world first)</span><br>
+                <input id="commitment-output" size="30" readonly aria-describedby="commitment-help">
+                <button id="copy-link" type="button">copy link to commitment</button>
+            </p>
+            <p>
+                <label for="r-output">blinding scalar (base64)</label>
+                <span id="r-help">(save this and keep it secret until you want to reveal your message to the world)</span><br>
+                <input id="r-output" size="30" readonly aria-describedby="r-help">
+                <button id="copy-r" type="button">copy blinding scalar</button>
+            </p>
+            <p id="manual-copy" hidden>
+                <label for="link-output">link to commitment:</label><br>
+                <input id="link-output" size="30" readonly>
+            </p>
+        </div>
+    </form>
 
-  <script type="module">
-    const byId = id => document.getElementById(id);
-    const commitForm = byId('commit-form');
-    const verifyForm = byId('verify-form');
-    const commitMode = byId('commit-mode');
-    const verifyMode = byId('verify-mode');
-    const status = byId('status');
-    const rOutput = byId('r-output');
-    const linkOutput = byId('link-output');
-    const manualCopy = byId('manual-copy');
-    const prefix = '#verify-commit=';
-    const utf8 = new TextEncoder();
+    <form id="verify-form" hidden>
+        <p>
+            <label for="verify-commitment">commitment (base64):</label><br>
+            <input id="verify-commitment" size="30" required
+                spellcheck="false" autocomplete="off">
+        </p>
+        <p>
+            <label for="verify-message">message:</label><br>
+            <textarea id="verify-message" rows="4" cols="30" required></textarea>
+        </p>
+        <p>
+            <label for="verify-r">blinding scalar (base64):</label><br>
+            <input id="verify-r" size="30" required
+                spellcheck="false" autocomplete="off">
+        </p>
+        <p><button type="submit">verify commitment</button></p>
+    </form>
 
-    function toBase64(bytes) {
-      return btoa(String.fromCharCode(...bytes));
-    }
+    <p id="status" role="status">loading cryptography…</p>
 
-    function fromBase64(value, length) {
-      const bytes = Uint8Array.from(atob(value), char => char.charCodeAt(0));
-      if (bytes.length !== length || toBase64(bytes) !== value) {
-        throw new Error('Invalid Base64');
-      }
-      return bytes;
-    }
+    <script type="module">
+        const byId = id => document.getElementById(id);
+        const commitForm = byId('commit-form');
+        const verifyForm = byId('verify-form');
+        const commitMode = byId('commit-mode');
+        const verifyMode = byId('verify-mode');
+        const status = byId('status');
+        const rOutput = byId('r-output');
+        const linkOutput = byId('link-output');
+        const manualCopy = byId('manual-copy');
+        const prefix = '#verify-commit=';
+        const utf8 = new TextEncoder();
 
-    function setMode(verifying) {
-        commitForm.hidden = verifying;
-        verifyForm.hidden = !verifying;
-        commitMode.setAttribute('aria-pressed', String(!verifying));
-        verifyMode.setAttribute('aria-pressed', String(verifying));
-        byId('mode-heading').textContent = verifying
-            ? 'Verify a commitment'
-            : 'Create a commitment';
-        status.textContent = '';
-    }
-
-    async function copyValue(input, label) {
-      try {
-        await navigator.clipboard.writeText(input.value);
-        manualCopy.hidden = true;
-        status.textContent = `${label} copied.`;
-      } catch {
-        manualCopy.hidden = input !== linkOutput;
-        input.focus();
-        input.select();
-        status.textContent = `Copy the selected ${label.toLowerCase()}.`;
-      }
-    }
-
-    try {
-      const [{ secp256k1 }, { sha256 }, { bytesToNumberBE }] =
-        await Promise.all([
-          import('https://cdn.jsdelivr.net/npm/@noble/curves@1.9.7/secp256k1/+esm'),
-          import('https://cdn.jsdelivr.net/npm/@noble/hashes@1.8.0/sha256/+esm'),
-          import('https://cdn.jsdelivr.net/npm/@noble/curves@1.9.7/abstract/utils/+esm'),
-        ]);
-
-      const Point = secp256k1.ProjectivePoint;
-      const N = secp256k1.CURVE.n;
-      const G = Point.BASE;
-
-      const hBytes = new Uint8Array(33);
-      hBytes[0] = 2;
-      hBytes.set(sha256(G.toRawBytes(false)), 1);
-      const H = Point.fromHex(hBytes);
-
-      function messagePoint(message) {
-        const digest = sha256(utf8.encode(message));
-        const scalar = (bytesToNumberBE(digest) % (N - 1n)) + 1n;
-        return G.multiply(scalar);
-      }
-
-      function decodeCommitment(value) {
-        return Point.fromHex(fromBase64(value, 33));
-      }
-
-      function commit(message) {
-        const messageTerm = messagePoint(message);
-        let rBytes;
-        let point;
-
-        do {
-          rBytes = secp256k1.utils.randomPrivateKey();
-          point = messageTerm.add(H.multiply(bytesToNumberBE(rBytes)));
-        } while (point.equals(Point.ZERO));
-
-        return {
-          commitment: toBase64(point.toRawBytes(true)),
-          r: toBase64(rBytes),
-        };
-      }
-
-      function verify(commitment, message, encodedR) {
-        let point;
-        try {
-          point = decodeCommitment(commitment);
-        } catch {
-          return 'Enter a valid Base64 commitment.';
+        function toBase64(bytes) {
+            return btoa(String.fromCharCode(...bytes));
         }
 
-        let r;
-        try {
-          r = bytesToNumberBE(fromBase64(encodedR, 32));
-        } catch {
-          return 'Enter a valid Base64 blinding scalar.';
+        function fromBase64(value, length) {
+            const bytes = Uint8Array.from(atob(value), char => char.charCodeAt(0));
+            if (bytes.length !== length || toBase64(bytes) !== value) {
+                throw new Error('Invalid Base64');
+            }
+            return bytes;
         }
 
-        if (r <= 0n || r >= N) {
-          return 'The blinding scalar is outside the valid range.';
+        function setMode(verifying) {
+            commitForm.hidden = verifying;
+            verifyForm.hidden = !verifying;
+
+            const current = verifying ? verifyMode : commitMode;
+            const other = verifying ? commitMode : verifyMode;
+
+            current.removeAttribute('href');
+            current.setAttribute('aria-current', 'page');
+            other.setAttribute('href', verifying ? '#commit' : '#verify');
+            other.removeAttribute('aria-current');
+
+            byId('mode-heading').textContent = verifying
+                ? 'verify a commitment'
+                : 'create a commitment';
+
+            status.textContent = '';
         }
 
-        const expected = messagePoint(message).add(H.multiply(r));
-        return point.equals(expected)
-          ? 'Verified. The message and blinding scalar match.'
-          : 'Verification failed. The message or blinding scalar does not match.';
-      }
-
-      function loadHash() {
-        const hash = window.location.hash;
-        const verifying = hash.startsWith(prefix);
-        setMode(verifying);
-        if (!verifying) return;
-
-        const input = byId('verify-commitment');
-        input.value = '';
-        byId('verify-message').value = '';
-        byId('verify-r').value = '';
+        async function copyValue(input, label) {
+            try {
+                await navigator.clipboard.writeText(input.value);
+                manualCopy.hidden = true;
+                status.textContent = `${label} copied.`;
+            } catch {
+                manualCopy.hidden = input !== linkOutput;
+                input.focus();
+                input.select();
+                status.textContent = `copy the selected ${label.toLowerCase()}.`;
+            }
+        }
 
         try {
-          const commitment = decodeURIComponent(hash.slice(prefix.length));
-          decodeCommitment(commitment);
-          input.value = commitment;
+            const [{ secp256k1 }, { sha256 }, { bytesToNumberBE }] =
+                await Promise.all([
+                    import('https://cdn.jsdelivr.net/npm/@noble/curves@1.9.7/secp256k1/+esm'),
+                    import('https://cdn.jsdelivr.net/npm/@noble/hashes@1.8.0/sha256/+esm'),
+                    import('https://cdn.jsdelivr.net/npm/@noble/curves@1.9.7/abstract/utils/+esm'),
+                ]);
+
+            const Point = secp256k1.ProjectivePoint;
+            const N = secp256k1.CURVE.n;
+            const G = Point.BASE;
+
+            const hBytes = new Uint8Array(33);
+            hBytes[0] = 2;
+            hBytes.set(sha256(G.toRawBytes(false)), 1);
+            const H = Point.fromHex(hBytes);
+
+            function messagePoint(message) {
+                const digest = sha256(utf8.encode(message));
+                const scalar = (bytesToNumberBE(digest) % (N - 1n)) + 1n;
+                return G.multiply(scalar);
+            }
+
+            function decodeCommitment(value) {
+                return Point.fromHex(fromBase64(value, 33));
+            }
+
+            function commit(message) {
+                const messageTerm = messagePoint(message);
+                let rBytes;
+                let point;
+
+                do {
+                    rBytes = secp256k1.utils.randomPrivateKey();
+                    point = messageTerm.add(H.multiply(bytesToNumberBE(rBytes)));
+                } while (point.equals(Point.ZERO));
+
+                return {
+                    commitment: toBase64(point.toRawBytes(true)),
+                    r: toBase64(rBytes),
+                };
+            }
+
+            function verify(commitment, message, encodedR) {
+                let point;
+                try {
+                    point = decodeCommitment(commitment);
+                } catch {
+                    return 'enter a valid Base64 commitment.';
+                }
+
+                let r;
+                try {
+                    r = bytesToNumberBE(fromBase64(encodedR, 32));
+                } catch {
+                    return 'enter a valid Base64 blinding scalar.';
+                }
+
+                if (r <= 0n || r >= N) {
+                    return 'the blinding scalar is outside the valid range.';
+                }
+
+                const expected = messagePoint(message).add(H.multiply(r));
+                return point.equals(expected)
+                    ? 'verified. the message and blinding scalar match.'
+                    : 'verification failed. the message or blinding scalar does not match.';
+            }
+
+            function loadHash() {
+                const hash = window.location.hash;
+                const hasCommitment = hash.startsWith(prefix);
+
+                setMode(hash === '#verify' || hasCommitment);
+                if (!hasCommitment) return;
+
+                const input = byId('verify-commitment');
+                input.value = '';
+                byId('verify-message').value = '';
+                byId('verify-r').value = '';
+
+                try {
+                    const commitment = decodeURIComponent(hash.slice(prefix.length));
+                    decodeCommitment(commitment);
+                    input.value = commitment;
+                } catch {
+                    status.textContent = 'invalid commitment link. you can enter the commitment manually.';
+                }
+            }
+
+            commitForm.addEventListener('submit', event => {
+                event.preventDefault();
+
+                try {
+                    const opening = commit(byId('commit-message').value);
+                    const url = new URL(window.location.href);
+                    url.hash = prefix + opening.commitment;
+
+                    byId('commitment-output').value = opening.commitment;
+                    rOutput.value = opening.r;
+                    linkOutput.value = url.href;
+                    manualCopy.hidden = true;
+                    byId('result').hidden = false;
+                    status.textContent = 'commitment created.';
+                } catch {
+                    byId('result').hidden = true;
+                    status.textContent = 'could not create a commitment. try again.';
+                }
+            });
+
+            byId('copy-link').addEventListener('click', () => {
+                copyValue(linkOutput, 'link to commitment');
+            });
+
+            byId('copy-r').addEventListener('click', () => {
+                copyValue(rOutput, 'blinding scalar');
+            });
+
+            verifyForm.addEventListener('submit', event => {
+                event.preventDefault();
+                status.textContent = verify(
+                    byId('verify-commitment').value.trim(),
+                    byId('verify-message').value,
+                    byId('verify-r').value.trim()
+                );
+            });
+
+            window.addEventListener('hashchange', loadHash);
+            byId('create').disabled = false;
+            loadHash();
         } catch {
-          status.textContent = 'Invalid commitment link. You can enter the commitment manually.';
+            status.textContent = 'could not load the cryptography libraries. check your connection and reload.';
         }
-      }
-
-      commitMode.addEventListener('click', () => {
-        if (window.location.hash.startsWith(prefix)) {
-          const url = new URL(window.location.href);
-          url.hash = '';
-          history.replaceState(null, '', url);
-        }
-        setMode(false);
-      });
-
-      verifyMode.addEventListener('click', () => setMode(true));
-
-      commitForm.addEventListener('submit', event => {
-        event.preventDefault();
-
-        try {
-          const opening = commit(byId('commit-message').value);
-          const url = new URL(window.location.href);
-          url.hash = prefix + opening.commitment;
-
-          byId('commitment-output').value = opening.commitment;
-          rOutput.value = opening.r;
-          linkOutput.value = url.href;
-          manualCopy.hidden = true;
-          byId('result').hidden = false;
-          status.textContent = 'Commitment created.';
-        } catch {
-          byId('result').hidden = true;
-          status.textContent = 'Could not create a commitment. Try again.';
-        }
-      });
-
-      byId('copy-link').addEventListener('click', () => {
-        copyValue(linkOutput, 'Link to commitment');
-      });
-
-      byId('copy-r').addEventListener('click', () => {
-        copyValue(rOutput, 'Blinding scalar');
-      });
-
-      verifyForm.addEventListener('submit', event => {
-        event.preventDefault();
-        status.textContent = verify(
-          byId('verify-commitment').value.trim(),
-          byId('verify-message').value,
-          byId('verify-r').value.trim()
-        );
-      });
-
-      window.addEventListener('hashchange', loadHash);
-      commitMode.disabled = false;
-      verifyMode.disabled = false;
-      byId('create').disabled = false;
-      loadHash();
-    } catch {
-      status.textContent = 'Could not load the cryptography libraries. Check your connection and reload.';
-    }
-  </script>
+    </script>
 </body>
 </html>
