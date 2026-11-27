@@ -145,21 +145,27 @@
             }
 
             function decodeCommitment(value) {
+                if (value === 'AA==') return Point.ZERO; // SEC1 point at infinity
                 return Point.fromHex(fromBase64(value, 33));
             }
 
+            function commitmentPoint(message, r) {
+                const blindingPoint = r === 0n ? Point.ZERO : H.multiply(r);
+                return messagePoint(message).add(blindingPoint);
+            }
+
             function commit(message) {
-                const messageTerm = messagePoint(message);
-                let rBytes;
-                let point;
+                const rBytes = new Uint8Array(32);
+                let r;
 
                 do {
-                    rBytes = secp256k1.utils.randomPrivateKey();
-                    point = messageTerm.add(H.multiply(bytesToNumberBE(rBytes)));
-                } while (point.equals(Point.ZERO));
+                    crypto.getRandomValues(rBytes);
+                    r = bytesToNumberBE(rBytes);
+                } while (r >= N);
 
+                const point = commitmentPoint(message, r);
                 return {
-                    commitment: toBase64(point.toRawBytes(true)),
+                    commitment: point.equals(Point.ZERO) ? 'AA==' : toBase64(point.toRawBytes(true)),
                     r: toBase64(rBytes),
                 };
             }
@@ -179,11 +185,11 @@
                     return 'enter a valid Base64 blinding scalar.';
                 }
 
-                if (r <= 0n || r >= N) {
+                if (r >= N) {
                     return 'the blinding scalar is outside the valid range.';
                 }
 
-                const expected = messagePoint(message).add(H.multiply(r));
+                const expected = commitmentPoint(message, r);
                 return point.equals(expected)
                     ? 'verified. the message and blinding scalar match.'
                     : 'verification failed. the message or blinding scalar does not match.';
