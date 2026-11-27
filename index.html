@@ -6,12 +6,12 @@
   <title>Pedersen Commitment</title>
 </head>
 <body>
-  <h1>Pedersen Commitment</h1>
-
   <p>
     <button id="commit-mode" type="button" aria-pressed="true" disabled>Commit</button>
     <button id="verify-mode" type="button" aria-pressed="false" disabled>Verify</button>
   </p>
+
+  <h2 id="mode-heading">Create a commitment</h2>
 
   <hr>
 
@@ -89,11 +89,14 @@
     }
 
     function setMode(verifying) {
-      commitForm.hidden = verifying;
-      verifyForm.hidden = !verifying;
-      commitMode.setAttribute('aria-pressed', String(!verifying));
-      verifyMode.setAttribute('aria-pressed', String(verifying));
-      status.textContent = '';
+        commitForm.hidden = verifying;
+        verifyForm.hidden = !verifying;
+        commitMode.setAttribute('aria-pressed', String(!verifying));
+        verifyMode.setAttribute('aria-pressed', String(verifying));
+        byId('mode-heading').textContent = verifying
+            ? 'Verify a commitment'
+            : 'Create a commitment';
+        status.textContent = '';
     }
 
     async function copyValue(input, label) {
